@@ -15,19 +15,6 @@ logger = get_logger("Main")
 
 # Parameters
 args = parse_cmdline_args()
-#dataset_name = "MNIST"
-#architecture = "MNIST_MLP"
-#epochs = 3
-#nb_examples = 30
-loss_func = nn.CrossEntropyLoss()
-#attack_types = ["FGSM", "BIM", "DeepFool", "CW"]
-#epsilons = [0.025, 0.05, 0.1, 0.4]
-#num_iter = 50
-#pruning = 0
-#adv_training = False
-#test_size = 5
-logger.info(f"attack types = {args.attack_types}")
-
 
 # Main function
 def run_exp(nb_examples, dataset_name, model, attack_types, epsilons, num_iter, test_size):
@@ -71,7 +58,7 @@ def load_obj(pathname):
 
 # Running experiments
 model, filename = get_my_model(args.dataset_name, args.architecture, args.epochs,
-    loss_func, args.pruning, args.adv_training)
+    args.loss_func, args.pruning, args.adv_training)
 adv_dict = run_exp(args.nb_examples, args.dataset_name, model, args.attack_types,
     args.epsilons, args.num_iter, args.test_size)
 

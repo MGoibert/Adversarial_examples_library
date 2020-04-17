@@ -1,5 +1,6 @@
 import argparse
 import torch
+from torch import nn
 
 from utils.tools import get_logger
 
@@ -17,6 +18,13 @@ def str2list_float(values):
 	val_list = [float(val) for val in values.split(";")]
 	return val_list
 
+def str2list_str(values):
+    if not isinstance(values, list):
+        val_list = [values]
+    else:
+        val_list = values
+    return val_list
+
 
 def parse_cmdline_args():
     parser = argparse.ArgumentParser(
@@ -25,20 +33,23 @@ def parse_cmdline_args():
     parser.add_argument(
         '--dataset_name', type=str, default="MNIST",
         choices=["MNIST", "FashionMNIST", "SVHN", "SVHN_BandW", "CIFAR10"],
-        help="which dataset to use")
+        help="Which dataset to use")
     parser.add_argument(
         '--architecture', type=str, default="MNIST_MLP",
         choices=["MNIST_MLP", "MNIST_LeNet", "FashionMNIST_MLP", "FashionMNIST_LeNet",
         "SVHN_LeNet", "SVHN_LeNet_BandW", "CIFAR_LeNet", "ResNet18"],
-        help="which architecture of NN to use")
+        help="Which architecture of NN to use")
     parser.add_argument(
         '--epochs', type=int, default=50,
-        help="number of epochs: number of passes to make over data")
+        help="Number of epochs: number of passes to make over data")
+    parser.add_argument(
+        '--loss_func', default=nn.CrossEntropyLoss(),
+        help="Loss function for training")
     parser.add_argument(
         '--nb_examples', type=int, default=100,
         help="Number of adversaries to save")
     parser.add_argument(
-        '--attack_types', type=str, default="FGSM", nargs="+",
+        '--attack_types', type=str2list_str, default="FGSM", nargs="+",
         help="Number of adversaries to save")
     parser.add_argument(
         '--epsilons', type=str2list_float, default="0.01;0.1;0.4",
