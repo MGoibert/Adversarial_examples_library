@@ -18,7 +18,7 @@ args = parse_cmdline_args()
 
 # Main function
 def run_exp(nb_examples, dataset_name, model, attack_types, epsilons, num_iter, test_size):
-
+    logger.info(f"attack list = {attack_types}")
     list_adv_dict = list()
     for attack_type in attack_types:
         logger.info(f"The current attack = {attack_type}")
