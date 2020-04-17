@@ -1,0 +1,8 @@
+README.md
+requirements.txt
+setup.py
+adversarial_library.egg-info/PKG-INFO
+adversarial_library.egg-info/SOURCES.txt
+adversarial_library.egg-info/dependency_links.txt
+adversarial_library.egg-info/requires.txt
+adversarial_library.egg-info/top_level.txt
