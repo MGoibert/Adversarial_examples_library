@@ -60,6 +60,7 @@ There are different parameters you can use to personnalize the experiment.
 ### B) Experiment examples
 
 To launch the basic experiment (using MNIST dataset and a basic MLP with only FGSM attack) just use:
+
 ```bash
 $ ipython --pdb main.py
 ```
@@ -67,17 +68,21 @@ $ ipython --pdb main.py
 Then you can modify the parameters in command line.
 
 For example, to use SVHN LeNet on all attacks with specific values of epsilons for FGSM and BIM:
+
 ```bash
 $ ipython --pdb main.py -- --dataset_name SVHN --architecture SVHN_LeNet --epochs 250 --attack_types FGSM BIM DeepFool CW --epsilons 0.01;0.025;0.05;0.1;0.2
 ```
 
 NOT IMPLEMENTED YET
+
 If you want to test these attacks on a pruned NN (here on MNIST LeNet) up to 80% (meaning you remove 80% of edges):
+
 ```bash
 $ ipython --pdb main.py -- --pruning 0.8  --architecture MNIST_LeNet --epochs 200 --attack_types FGSM --epsilons 0.01;0.05;0.1;0.2;0.3;0.4
 ```
 
 If you want to test these attacks on an adversarially trained NN (here on MNIST LeNet):
+
 ```bash
 $ ipython --pdb main.py -- --adv_training True  --architecture MNIST_LeNet --epochs 200 --attack_types FGSM --epsilons 0.01;0.05;0.1;0.2;0.3;0.4
 ```
