@@ -32,7 +32,7 @@ def parse_cmdline_args():
         "SVHN_LeNet", "SVHN_LeNet_BandW", "CIFAR_LeNet", "ResNet18"],
         help="which architecture of NN to use")
     parser.add_argument(
-        '--epochs', type=int, default=3,
+        '--epochs', type=int, default=50,
         help="number of epochs: number of passes to make over data")
     parser.add_argument(
         '--nb_examples', type=int, default=100,
