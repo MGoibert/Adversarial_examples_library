@@ -5,6 +5,7 @@ import torch
 logging.basicConfig(level=logging.INFO)
 root_logger = logging.getLogger()
 root_logger.handlers = list()
+torch.set_default_tensor_type(torch.DoubleTensor)
 
 # logger definition
 def get_logger(name: str) -> logging.Logger:

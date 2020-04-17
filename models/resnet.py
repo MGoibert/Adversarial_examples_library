@@ -3,8 +3,10 @@ Synopsis: Yet another ResNet implementation
 Author: m.goibert,
         Elvis Dohmatob <gmdopp@gmail.com
 """
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
+torch.set_default_tensor_type(torch.DoubleTensor)
 
 
 class BasicBlock(nn.Module):
@@ -103,7 +105,7 @@ class ResNet(nn.Module):
         out = out.view(out.size(0), -1)
         out = self.linear(out)
         if temp:
-            return F.softmax(ou/tempt, dim=1)
+            return F.softmax(out/temp, dim=1)
         else:
             out = F.softmax(out, dim=1)
             return out

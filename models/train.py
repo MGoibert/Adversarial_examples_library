@@ -1,6 +1,5 @@
 from random import shuffle, seed
 import os
-import pathlib
 from time import time
 
 import torch
@@ -173,5 +172,5 @@ def get_my_model(dataset_name, architecture, epochs, loss_func, pruning, adv_tra
 
     logger.info(f"Checking test accuracy = {compute_accuracy(model, dataset.test_loader)}")
 
-    return model
+    return model, model_filename
 

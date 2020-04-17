@@ -41,20 +41,20 @@ class Dataset(object):
         return self.name
 
     @classmethod
-    def get_or_create(cls, name: str, validation_size: int = 1000):
+    def get_or_create(cls, name: str, test_size: int = 100, validation_size: int = 1000):
         """
         Using singletons for dataset to shuffle once at the beginning of the run
         """
-        if (name, validation_size) not in Dataset._datasets:
-            Dataset._datasets[(name, validation_size)] = cls(
-                name=name, validation_size=validation_size
+        if (name, test_size, validation_size) not in Dataset._datasets:
+            Dataset._datasets[(name, test_size, validation_size)] = cls(
+                name=name, test_size=test_size, validation_size=validation_size
             )
             logger.info(
-                f"Instantiated dataset {name} with validation_size {validation_size}"
+                f"Instantiated dataset {name} test_size = {test_size} and validation_size = {validation_size}"
             )
-        return Dataset._datasets[(name, validation_size)]
+        return Dataset._datasets[(name, test_size, validation_size)]
 
-    def __init__(self, name: str, validation_size: int = 1000):
+    def __init__(self, name: str, test_size: int = 100, validation_size: int = 1000):
 
         self.name = name.lower()
 
@@ -121,7 +121,7 @@ class Dataset(object):
             dataset=self.train_dataset, batch_size=100, shuffle=True
         )
         self.test_loader = torch.utils.data.DataLoader(
-            dataset=self.test_dataset, shuffle=True, batch_size=1
+            dataset=self.test_dataset, shuffle=True, batch_size=test_size
         )
         self.val_loader = torch.utils.data.DataLoader(
             dataset=self.val_dataset, batch_size=len(self.val_dataset), shuffle=True
