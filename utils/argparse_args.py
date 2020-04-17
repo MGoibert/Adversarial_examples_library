@@ -19,11 +19,7 @@ def str2list_float(values):
 	return val_list
 
 def str2list_str(values):
-    logger.info(f"values = {values}")
-    if len(values) <= 1:
-        val_list = [values]
-    else:
-        val_list = values
+    val_list = values
     return val_list
 
 
