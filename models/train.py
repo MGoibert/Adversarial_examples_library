@@ -40,7 +40,7 @@ def get_model(architecture):
         model = CIFAR_LeNet()
     elif architecture == "ResNet18":
         model = ResNet18()
-    return model
+    return model.to(device)
 
 def compute_accuracy(model, loader):
     model.eval()
@@ -58,6 +58,7 @@ def compute_accuracy(model, loader):
 
 def go_training(model, x, y, epoch, optimizer, loss_func):
     x = x.double()
+    x = x.to(device)
     y = y.to(device)
     optimizer.zero_grad()
 
@@ -69,6 +70,7 @@ def go_training(model, x, y, epoch, optimizer, loss_func):
 
 def eval_training_val(model, dataset, x_val, y_val, epoch, optimizer, scheduler, loss_func):
     y_val = y_val.to(device)
+    x_val = x_val.to(device)
     x_val = x_val.double()
     y_val_pred = model(x_val)
     val_loss = loss_func(y_val_pred, y_val)
@@ -155,6 +157,7 @@ def get_my_model(dataset_name, architecture, epochs, loss_func, pruning, adv_tra
     try:
         model = get_model(architecture)
         model.load_state_dict(torch.load(f"{model_filename}.pt"))
+        model = model.to(device)
         logger.info(f"Loaded successfully model from {model_filename}")
     except FileNotFoundError:
         logger.info(f"Unable to find model in {model_filename}... Retraining it...")
@@ -167,6 +170,7 @@ def get_my_model(dataset_name, architecture, epochs, loss_func, pruning, adv_tra
             adv_training,
             model_filename
             )
+        model = model.to(device)
         torch.save(model.state_dict(), f"{model_filename}.pt")
         logger.info(f"Saved trained model in {model_filename}.pt")
 

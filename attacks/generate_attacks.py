@@ -18,6 +18,7 @@ def adv_gen(model, x, y,
             lims=(0.0,1.0)):
     #y = torch.from_numpy(y).double()
     x = x.double()
+    x, y, model = x.to(device), y.to(device), model.to(device)
     x.requires_grad = True
     if attack_type == "FGSM":
         attacker = FGSM(model, loss_func, lims=lims)
@@ -36,6 +37,8 @@ def adv_gen(model, x, y,
         x_adv = attacker(x, y)
     elif attack_type == "DeepFool":
         x_adv = attacker(x, y)
+
+    x_adv = x_adv.to(device)
 
     return x_adv, x
 
