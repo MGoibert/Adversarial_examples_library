@@ -1,4 +1,5 @@
 from random import shuffle, seed
+import scipy
 
 import torch
 import torchvision.datasets as dset
