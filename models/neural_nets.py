@@ -63,7 +63,7 @@ class FashionMNIST_MLP(nn.Module):
         self.fc2 = nn.Linear(512, 256)
         self.fc3 = nn.Linear(256, 128)
         self.fc4 = nn.Linear(128, 64)
-        self.fc4 = nn.Linear(64, 10)
+        self.fc5 = nn.Linear(64, 10)
         self.soft = nn.Softmax(dim=1)
 
     def forward(self, x, output = "final"):
@@ -71,7 +71,8 @@ class FashionMNIST_MLP(nn.Module):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = F.relu(self.fc3(x))
-        x = self.fc4(x)
+        x = F.relu(self.fc4(x))
+        x = self.fc5(x)
         if output == "presoft":
             return x
         else:
