@@ -82,7 +82,8 @@ save_name = (f"{args.epochs}_epochs"
     + f"_{args.nb_examples}_examples"
     )
 
-save_dict_adv(adv_dict, save_path+"/"+save_name )
+#save_dict_adv(adv_dict, save_path+"/"+save_name)
+torch.save(adv_dict, save_path+"/"+save_name)
 
 logger.info(f"adv dict keys = {adv_dict.keys()}")
 for at in adv_dict.keys():
