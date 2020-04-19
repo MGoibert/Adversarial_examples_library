@@ -107,6 +107,13 @@ def training_nn(dataset, architecture, epochs, loss_func, pruning, adv_training,
         optimizer = optim.SGD(model.parameters(), lr=lr)
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(
             optimizer, mode="min", patience=patience, verbose=True, factor=0.5)
+    elif architecture == "ResNet18":
+        lr = 0.001
+        patience = 50
+        optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.99))
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, mode="min", patience=patience, verbose=True, factor=0.5)
+
 
     # Initialization
     loss_history = []
