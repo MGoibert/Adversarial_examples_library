@@ -3,6 +3,7 @@ import copy
 import numpy as np
 import torchvision.transforms as transforms
 from torch.autograd import Variable
+from torch.autograd.gradcheck import zero_gradients as zgrad
 
 from utils.tools import get_logger, device
 
@@ -223,43 +224,51 @@ class DeepFool(_BaseAttack):
     def run(self, image, true_label, epsilon=None):
         self.model.eval()
 
-        nx = torch.unsqueeze(image, 0).detach().cpu().numpy().copy()
+        for _ in range(2):
+            if len(image.size()) < 3:
+                image = image.unsqueeze(0)
+        batch_size = image.size()[0]
+        nx = image.detach().cpu().numpy().copy()
         nx = torch.from_numpy(nx)
         nx.requires_grad = True
         eta = torch.zeros(nx.shape)
+        w = torch.zeros(nx.shape)
 
         out = self.model(nx+eta, output="presoft")
-        py = out.max(1)[1].item()
-        ny = out.max(1)[1].item()
+        py = out.argmax(1).numpy()
+        ny = out.argmax(1).numpy()
 
         i_iter = 0
 
-        while py == ny and i_iter < self.num_iter:
-            out[0, py].backward(retain_graph=True)
+        while (py == ny).any() and i_iter < self.num_iter:
+            out[list(range(batch_size)), py].sum().backward(retain_graph=True)
             grad_np = nx.grad.data.clone()
             value_l = np.inf
-            ri = None
 
             for i in range(self.num_classes):
-                if i == py:
+                if (i == py).all():
                     continue
 
                 nx.grad.data.zero_()
-                out[0, i].backward(retain_graph=True)
+                out[list(range(batch_size)), i].sum().backward(retain_graph=True)
                 grad_i = nx.grad.data.clone()
 
                 wi = grad_i - grad_np
-                fi = out[0, i] - out[0, py]
-                value_i = np.abs(fi.item()) / np.linalg.norm(wi.numpy().flatten())
+                fi = out[list(range(batch_size)), i] - out[list(range(batch_size)), py]
+                value_i = np.abs(fi.detach().numpy()) / np.linalg.norm(wi.reshape(batch_size,-1), axis=1)
 
+                val = (value_i < value_l).astype(int)
+                if np.isnan(value_i).any():
+                    logger.info(f"is nan ? {np.isnan(value_i)}")
+                if val.any():
+                    w = (w.T*(1-val) + (wi.T*val)).T
+                
+                ri = ((val*value_i * w.detach().numpy().T )/np.linalg.norm(w.reshape(batch_size,-1), axis=1)).T
 
-                if value_i < value_l:
-                    ri = value_i/np.linalg.norm(wi.numpy().flatten()) * wi
-
-            eta += ri.clone() if type(ri) != type(None) else 0
+            eta += torch.from_numpy(ri).clone()
             nx.grad.data.zero_()
             out = self.model(self.clamp(nx+eta), output="presoft")
-            py = out.max(1)[1].item()
+            py = out.argmax(1).numpy()
             i_iter += 1
         
         x_adv = self.clamp(nx+eta)
