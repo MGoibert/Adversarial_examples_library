@@ -119,7 +119,7 @@ class Dataset(object):
                 self.test_dataset.append(x)
 
         self.train_loader = torch.utils.data.DataLoader(
-            dataset=self.train_dataset, batch_size=100, shuffle=True
+            dataset=self.train_dataset, batch_size=500, shuffle=True
         )
         self.test_loader = torch.utils.data.DataLoader(
             dataset=self.test_dataset, shuffle=True, batch_size=test_size

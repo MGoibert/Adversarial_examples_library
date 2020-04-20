@@ -225,6 +225,8 @@ class DeepFool(_BaseAttack):
 
         nx = torch.unsqueeze(image, 0).detach().cpu().numpy().copy()
         nx = torch.from_numpy(nx)
+        if len(nx.size()) >= 5:
+            nx = nx.squeeze(0)
         nx.requires_grad = True
         eta = torch.zeros(nx.shape)
 
@@ -263,6 +265,7 @@ class DeepFool(_BaseAttack):
             i_iter += 1
         
         x_adv = self.clamp(nx+eta)
-        x_adv.squeeze_(0)
+        if len(x_adv.size()) >= 5:
+            x_adv.squeeze_(0)
 
         return x_adv

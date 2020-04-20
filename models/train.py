@@ -1,6 +1,7 @@
 from random import shuffle, seed
 import os
 from time import time
+from tqdm import tqdm
 
 import torch
 import numpy as np
@@ -52,8 +53,8 @@ def compute_accuracy(model, loader):
             target = target.to(device)
             output = model(data)
             pred = output.argmax(dim=1, keepdim=True)
-            correct += pred.eq(target.view_as(pred)).sum().item()
-    acc = correct / len(loader.dataset)
+            correct += pred.eq(target.view_as(pred)).detach().sum().item()
+    acc = float(correct / len(loader.dataset))
     return acc
 
 def go_training(model, x, y, epoch, optimizer, loss_func):
@@ -73,12 +74,12 @@ def eval_training_val(model, dataset, x_val, y_val, epoch, optimizer, scheduler,
     x_val = x_val.to(device)
     x_val = x_val.double()
     y_val_pred = model(x_val)
-    val_loss = loss_func(y_val_pred, y_val)
-    logger.info(f"Validation loss = {np.around(val_loss.item(), decimals=4)}")
+    val_loss = loss_func(y_val_pred, y_val).detach().item()
+    logger.info(f"Validation loss = {np.around(float(val_loss), decimals=4)}")
     scheduler.step(val_loss)
-    if epoch % 10 == 0:
+    if epoch % 1 == 0:
         logger.info(f"Val acc = {compute_accuracy(model, dataset.val_loader)}")
-    return val_loss.item()
+    return float(val_loss)
 
 
 def training_nn(dataset, architecture, epochs, loss_func, pruning, adv_training, model_filename):
@@ -109,7 +110,7 @@ def training_nn(dataset, architecture, epochs, loss_func, pruning, adv_training,
             optimizer, mode="min", patience=patience, verbose=True, factor=0.5)
     elif architecture == "ResNet18":
         lr = 0.001
-        patience = 50
+        patience = 5
         optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.99))
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(
             optimizer, mode="min", patience=patience, verbose=True, factor=0.5)
@@ -127,14 +128,15 @@ def training_nn(dataset, architecture, epochs, loss_func, pruning, adv_training,
         t = time()
         model.train()
 
-        for x_batch, y_batch in dataset.train_loader:
+        for x_batch, y_batch in tqdm(dataset.train_loader):
             go_training(model, x_batch, y_batch, epoch,
                 optimizer, loss_func)
 
-        model.eval()
-        for x_val, y_val in dataset.val_loader:
-            loss_val = eval_training_val(model, dataset, x_val, y_val, epoch, optimizer, scheduler, loss_func)
-            loss_history.append(loss_val)
+        #logger.info(f"Evaluating epoch...")
+        #model.eval()
+        #for x_val, y_val in dataset.val_loader:
+        #    loss_val = eval_training_val(model, dataset, x_val, y_val, epoch, optimizer, scheduler, loss_func)
+        #     loss_history.append(loss_val)
 
     return model, loss_history
             
