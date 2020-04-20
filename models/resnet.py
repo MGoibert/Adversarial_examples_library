@@ -95,7 +95,7 @@ class ResNet(nn.Module):
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
 
-    def forward(self, x, temp=False):
+    def forward(self, x, output="final", temp=False):
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.layer1(out)
         out = self.layer2(out)
@@ -104,7 +104,9 @@ class ResNet(nn.Module):
         out = F.avg_pool2d(out, 4)
         out = out.view(out.size(0), -1)
         out = self.linear(out)
-        if temp:
+        if output == "presoft":
+            return out
+        elif temp:
             return F.softmax(out/temp, dim=1)
         else:
             out = F.softmax(out, dim=1)
