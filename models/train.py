@@ -69,18 +69,26 @@ def go_training(model, x, y, epoch, optimizer, loss_func):
     loss.backward()
     optimizer.step()
 
-def eval_training_val(model, dataset, x_val, y_val, epoch, optimizer, scheduler, loss_func):
-    y_val = y_val.to(device)
-    x_val = x_val.to(device)
-    x_val = x_val.double()
-    y_val_pred = model(x_val)
-    val_loss = loss_func(y_val_pred, y_val).detach().item()
-    logger.info(f"Validation loss = {np.around(float(val_loss), decimals=4)}")
-    scheduler.step(val_loss)
-    if epoch % 1 == 0:
-        logger.info(f"Val acc = {compute_accuracy(model, dataset.val_loader)}")
-    return float(val_loss)
-
+def eval_training_val(model, dataset, epoch, optimizer, scheduler, loss_func):
+    val_item = 0.0
+    i = 0
+    for i, (x_val, y_val) in enumerate(dataset.val_loader):
+        i += 1
+        y_val = y_val.to(device)
+        x_val = x_val.to(device)
+        x_val = x_val.double()
+        y_val_pred = model(x_val)
+        val_loss = loss_func(y_val_pred, y_val)
+        val_item += float(val_loss)
+        del val_loss
+    val_tot = val_item/i
+    scheduler.step(val_tot)
+    logger.info(f"Validation loss = {np.around(val_tot, decimals=4)}")
+    if epoch % 10 == 0:
+        acc = compute_accuracy(model, dataset.val_loader)
+        logger.info(f"Val acc = {acc}")
+        del acc
+    return val_tot
 
 def training_nn(dataset, architecture, epochs, loss_func, pruning, adv_training, model_filename):
 
@@ -110,7 +118,7 @@ def training_nn(dataset, architecture, epochs, loss_func, pruning, adv_training,
             optimizer, mode="min", patience=patience, verbose=True, factor=0.5)
     elif architecture == "ResNet18":
         lr = 0.001
-        patience = 5
+        patience = 40
         optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.99))
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(
             optimizer, mode="min", patience=patience, verbose=True, factor=0.5)
@@ -132,11 +140,9 @@ def training_nn(dataset, architecture, epochs, loss_func, pruning, adv_training,
             go_training(model, x_batch, y_batch, epoch,
                 optimizer, loss_func)
 
-        #logger.info(f"Evaluating epoch...")
-        #model.eval()
-        #for x_val, y_val in dataset.val_loader:
-        #    loss_val = eval_training_val(model, dataset, x_val, y_val, epoch, optimizer, scheduler, loss_func)
-        #     loss_history.append(loss_val)
+        model.eval()
+        loss_val = eval_training_val(model, dataset,  epoch, optimizer, scheduler, loss_func)
+        loss_history.append(loss_val)
 
     return model, loss_history
             
