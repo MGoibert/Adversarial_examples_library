@@ -52,9 +52,10 @@ def gererating_adv_dict(attack_type, model, test_loader, epsilons, nb_examples,
         adv_dict[attack_type] = dict()
         for epsilon in epsilons:
             count = 0
+            success_adv = 0
             adv_dict[attack_type][epsilon] = {k: list() for k in ["x", "y", "x_adv", "y_adv"]}
             for x, y in test_loader:
-                x, y = x.to(device), y.to(device)
+                x, y = x.detach().to(device), y.detach().to(device)
                 x = x.double()
                 y_pred = model(x)
                 pred = y_pred.argmax(1)
@@ -62,29 +63,43 @@ def gererating_adv_dict(attack_type, model, test_loader, epsilons, nb_examples,
                 if ok_mask.sum() == 0:
                     continue
 
+                #count += ok_mask.sum()
                 x = x[ok_mask,:,:,:]
                 y = y[ok_mask]
-                count += ok_mask.sum()
 
-                x_adv, _ = adv_gen(model, x, y, attack_type=attack_type, epsilon=epsilon,
-                    num_classes=num_classes, num_iter=num_iter, lims=lims)
-                y_pred_adv = model(x_adv)
+                if epsilon == 0.0:
+                    for x_, y_, pred_ in zip(x, y, pred):
+                        if len(adv_dict[attack_type][epsilon]["y"]) < nb_examples:
+                            count += 1
+                            adv_dict[attack_type][epsilon]["x"].append(x_)
+                            adv_dict[attack_type][epsilon]["y"].append(y_)
+                            adv_dict[attack_type][epsilon]["x_adv"].append(x_)
+                            adv_dict[attack_type][epsilon]["y_adv"].append(pred_)
+                else:
+                    x_adv, _ = adv_gen(model, x, y, attack_type=attack_type, epsilon=epsilon,
+                        num_classes=num_classes, num_iter=num_iter, lims=lims)
+                    x_adv = x_adv.detach().to(device)
+                    y_pred_adv = model(x_adv)
 
-                for x_, y_, x_adv_, y_pred_adv_ in zip(x, y, x_adv, y_pred_adv):
-                    if y_pred_adv_.argmax(0) != y_:
-                        adv_dict[attack_type][epsilon]["x"]+= list(x_)
-                        adv_dict[attack_type][epsilon]["y"]+= [y_]
-                        adv_dict[attack_type][epsilon]["x_adv"] += list(x_adv_)
-                        adv_dict[attack_type][epsilon]["y_adv"]+= [y_pred_adv_.argmax(0)]
-                    if len(adv_dict[attack_type][epsilon]["y"]) >= nb_examples:
-                        break
+                    for x_, y_, x_adv_, y_pred_adv_ in zip(x, y, x_adv, y_pred_adv):
+                        count += 1
+                        if y_pred_adv_.argmax(0) != y_:
+                            success_adv += 1
+                            logger.info(f"x_adv type = {x_adv_.size()}")
+                            adv_dict[attack_type][epsilon]["x"].append(x_)
+                            adv_dict[attack_type][epsilon]["y"].append(y_)
+                            adv_dict[attack_type][epsilon]["x_adv"].append(x_adv_)
+                            adv_dict[attack_type][epsilon]["y_adv"].append(y_pred_adv_.argmax(0))
+                        if len(adv_dict[attack_type][epsilon]["y"]) >= nb_examples:
+                            break
                 if len(adv_dict[attack_type][epsilon]["y"]) >= nb_examples:
-                        break
+                    break
 
-            logger.info(f"Attack {attack_type} for eps = {epsilon}: adv acc = {np.round(1.0-float(len(adv_dict[attack_type][epsilon]['y']))/float(count), 3)}")
+            logger.info(f"Attack {attack_type} for eps = {epsilon}: adv acc = {np.round(1.0-float(success_adv)/float(count), 3)}")
 
     else:
         count = 0
+        success_adv = 0
         adv_dict[attack_type] = {k: list() for k in ["x", "y", "x_adv", "y_adv"]}
         for x, y in test_loader:
             x, y = x.to(device), y.to(device)
@@ -97,22 +112,24 @@ def gererating_adv_dict(attack_type, model, test_loader, epsilons, nb_examples,
 
             x = x[ok_mask,:,:,:]
             y = y[ok_mask]
-            count += ok_mask.sum()
+            #count += ok_mask.sum()
 
             x_adv, _ = adv_gen(model, x, y, attack_type=attack_type,
                     num_classes=num_classes, num_iter=num_iter, lims=lims)
             y_pred_adv = model(x_adv)
 
             for x_, y_, x_adv_, y_pred_adv_ in zip(x, y, x_adv, y_pred_adv):
+                count += 1
                 if y_pred_adv_.argmax(0) != y_:
-                    adv_dict[attack_type]["x"] += list(x_)
-                    adv_dict[attack_type]["y"] += [y_]
-                    adv_dict[attack_type]["x_adv"] += list(x_adv)
-                    adv_dict[attack_type]["y_adv"] += [y_pred_adv_.argmax(0)]
+                    success_adv += 1
+                    adv_dict[attack_type]["x"].append(x_)
+                    adv_dict[attack_type]["y"].append(y_)
+                    adv_dict[attack_type]["x_adv"].append(x_adv)
+                    adv_dict[attack_type]["y_adv"].append(y_pred_adv_.argmax(0))
                 if len(adv_dict[attack_type]["y"]) >= nb_examples:
                     break
             if len(adv_dict[attack_type]["y"]) >= nb_examples:
                     break
-        logger.info(f"Attack {attack_type}: adv acc = {np.round(1.0-float(len(adv_dict[attack_type]['y']))/float(count), 3)}")
+        logger.info(f"Attack {attack_type}: adv acc = {np.round(1.0-float(success_adv)/float(count), 3)}")
 
     return adv_dict
